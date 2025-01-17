@@ -8,7 +8,6 @@ import os.log
 import ServiceManagement
 import Settings
 import SimplyCoreAudio
-import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -22,7 +21,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   var jobRunning = false
   var startupActionWriteCounter: Int = 0
   var audioPlayer: AVAudioPlayer?
-  let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: UpdaterDelegate(), userDriverDelegate: nil)
+//  let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: UpdaterDelegate(), userDriverDelegate: nil)
+
 
   var settingsPaneStyle: Settings.Style {
     if !DEBUG_MACOS10, #available(macOS 11.0, *) {
@@ -53,13 +53,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     } else {
       self.checkPermissions()
     }
-    self.setPrefsBuildNumber()
+//    self.setPrefsBuildNumber()
     self.setDefaultPrefs()
     self.setMenu()
     CGDisplayRegisterReconfigurationCallback({ _, _, _ in app.displayReconfigured() }, nil)
     self.configure(firstrun: true)
     DisplayManager.shared.createGammaActivityEnforcer()
-    self.updaterController.startUpdater()
+    if let value = DisplayManager.shared.getOtherDisplays().first?.getBrightness() {
+      self.statusItem.button?.title = "\(Int(value * 100))"
+    }
+    NotificationCenter.default.addObserver(self, selector: #selector(sliderValueChange(noti:)), name: brightnessChangeNotify, object: nil)
+    SunTimeTool.shared.autoBrightnessWithTime()
+  }
+  
+  @objc
+  func sliderValueChange(noti: Notification) {
+    guard let value = noti.object as? Float else { return }
+    self.statusItem.button?.title = "\(Int(value * 100))"
+  }
+  
+  func autoSyncBrightness() {
+    if !prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) { return }
+    guard let otherDisplay = DisplayManager.shared.getOtherDisplays().first else { return }
+    guard let slider = otherDisplay.sliderHandler[.brightness] else { return }
+    guard let builtIn = DisplayManager.shared.getBuiltInDisplay() as? AppleDisplay else { return }
+    let endValue = builtIn.getAppleBrightness() * self.getBrightnessPercent(builtIn)
+    slider.setValue(endValue, displayID: otherDisplay.identifier)
+    _ = otherDisplay.setBrightness(endValue, slow: true)
+    self.statusItem.button?.title = "\(Int(endValue * 100))"
+  }
+
+  func getBrightnessPercent(_ buildIn: AppleDisplay) -> Float {
+    let bri = buildIn.getAppleBrightness()
+    let dayPercent = Float(prefs.string(forKey: PrefKey.syncPercent.rawValue) ?? "60") ?? 90
+    return bri * dayPercent / 100.0
   }
 
   @objc func quitClicked(_: AnyObject) {
@@ -106,6 +133,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       // Only settings that are not false, 0 or "" by default are set here. Assumes pre-wiped database.
       prefs.set(true, forKey: PrefKey.appAlreadyLaunched.rawValue)
       prefs.set(true, forKey: PrefKey.SUEnableAutomaticChecks.rawValue)
+      prefs.set(60,forKey: PrefKey.autoBrightnessDay.rawValue)
+      prefs.set(30, forKey: PrefKey.autoBrightnessNight.rawValue)
     }
   }
 
@@ -335,6 +364,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     menu.delegate = menu
     self.statusItem.button?.image = NSImage(named: "status")
     self.statusItem.menu = menu
+    self.statusItem.button?.font = NSFont.systemFont(ofSize: 12)
+    self.statusItem.button?.imagePosition = .imageLeft
   }
 
   private func showSafeModeAlertIfNeeded() {

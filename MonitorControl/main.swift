@@ -18,7 +18,7 @@ var app: AppDelegate!
 var menu: MenuHandler!
 
 let prefs = UserDefaults.standard
-
+let brightnessChangeNotify = Notification.Name(rawValue: "SliderValueChange")
 // Views
 private let storyboard = NSStoryboard(name: "Main", bundle: Bundle.main)
 let mainPrefsVc = storyboard.instantiateController(withIdentifier: "MainPrefsVC") as? MainPrefsViewController

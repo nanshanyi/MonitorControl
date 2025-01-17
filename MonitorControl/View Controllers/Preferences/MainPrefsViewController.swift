@@ -28,6 +28,14 @@ class MainPrefsViewController: NSViewController, SettingsPane {
   @IBOutlet var rowWriteStartupText: NSGridRow!
   @IBOutlet var rowReadStartupText: NSGridRow!
 
+  @IBOutlet weak var nightBrightness: NSTextField!
+  @IBOutlet weak var dayBrightness: NSTextField!
+  
+  @IBOutlet weak var sunriseOffset: NSTextField!
+  
+  @IBOutlet weak var sunsetOffset: NSTextField!
+  
+  @IBOutlet weak var autoChange: NSButton!
   func updateGridLayout() {
     if self.startupAction.selectedTag() == StartupAction.doNothing.rawValue {
       self.rowDoNothingStartupText.isHidden = false
@@ -49,6 +57,25 @@ class MainPrefsViewController: NSViewController, SettingsPane {
     super.viewDidLoad()
     self.populateSettings()
   }
+  
+  override func viewDidDisappear() {
+    super.viewDidDisappear()
+    if !nightBrightness.stringValue.isEmpty {
+      prefs.set(nightBrightness.integerValue, forKey: PrefKey.autoBrightnessNight.rawValue)
+    }
+    if !dayBrightness.stringValue.isEmpty {
+      prefs.set(dayBrightness.integerValue, forKey: PrefKey.autoBrightnessDay.rawValue)
+    }
+    
+    if !sunriseOffset.stringValue.isEmpty {
+      prefs.set(sunriseOffset.integerValue, forKey: PrefKey.sunriseOffset.rawValue)
+    }
+    
+    if !sunsetOffset.stringValue.isEmpty {
+      prefs.set(sunsetOffset.integerValue, forKey: PrefKey.sunsetOffset.rawValue)
+    }
+    
+  }
 
   @available(macOS, deprecated: 10.10)
   func populateSettings() {
@@ -61,6 +88,11 @@ class MainPrefsViewController: NSViewController, SettingsPane {
     self.enableSmooth.state = prefs.bool(forKey: PrefKey.disableSmoothBrightness.rawValue) ? .off : .on
     self.enableBrightnessSync.state = prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) ? .on : .off
     self.startupAction.selectItem(withTag: prefs.integer(forKey: PrefKey.startupAction.rawValue))
+    self.nightBrightness.stringValue = prefs.string(forKey: PrefKey.autoBrightnessNight.rawValue) ?? ""
+    self.dayBrightness.stringValue = prefs.string(forKey: PrefKey.autoBrightnessDay.rawValue) ?? ""
+    self.sunriseOffset.stringValue = prefs.string(forKey: PrefKey.sunriseOffset.rawValue) ?? ""
+    self.sunsetOffset.stringValue = prefs.string(forKey: PrefKey.sunsetOffset.rawValue) ?? ""
+    self.autoChange.state = prefs.bool(forKey: PrefKey.autoChange.rawValue) ? .on : .off
     // Preload Display settings to some extent to properly set up size in orther that animation won't fail
     menuslidersPrefsVc?.view.layoutSubtreeIfNeeded()
     keyboardPrefsVc?.view.layoutSubtreeIfNeeded()
@@ -144,6 +176,17 @@ class MainPrefsViewController: NSViewController, SettingsPane {
     prefs.set(sender.selectedTag(), forKey: PrefKey.startupAction.rawValue)
     self.updateGridLayout()
   }
+  
+  @IBAction func autoChangeClick(_ sender: NSButton) {
+    switch sender.state {
+    case .on:
+      prefs.set(true, forKey: PrefKey.autoChange.rawValue)
+    case .off:
+      prefs.set(false, forKey: PrefKey.autoChange.rawValue)
+    default: break
+    }
+  }
+  
 
   @available(macOS, deprecated: 10.10)
   func resetSheetModalHander(modalResponse: NSApplication.ModalResponse) {

@@ -1,5 +1,5 @@
 {
-  "originHash" : "df195b12c1f6bd471af1cacb709842cb7eb355cce32fee1413f0f7d7aa5c4eb2",
+  "originHash" : "8272c2fa435c491b5652fbd7dca575a752a3ab1fae4bfac878fb4272d6d2363b",
   "pins" : [
     {
       "identity" : "keyboardshortcuts",
@@ -34,15 +34,6 @@
       "location" : "https://github.com/rnine/SimplyCoreAudio",
       "state" : {
         "revision" : "75970285e2470f12a569cdff68ef5a75498a4646"
-      }
-    },
-    {
-      "identity" : "sparkle",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/sparkle-project/Sparkle",
-      "state" : {
-        "branch" : "2.x",
-        "revision" : "9042c8dbd9c6f6a1bebc2e4c4b878eac6984ddbd"
       }
     },
     {

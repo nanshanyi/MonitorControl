@@ -153,6 +153,18 @@ enum PrefKey: String {
 
   // Override DDC control command code
   case remapDDC
+  // 自动同步内建显示器亮度
+  case syncPercent
+  // 自动亮度白天
+  case autoBrightnessDay
+  // 自动亮度晚上
+  case autoBrightnessNight
+  // 日出偏移时间
+  case sunriseOffset
+  // 日落偏移时间
+  case sunsetOffset
+    // 自动调整
+  case autoChange
 }
 
 enum MultiKeyboardBrightness: Int {

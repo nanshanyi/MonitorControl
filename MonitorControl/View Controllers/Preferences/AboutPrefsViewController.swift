@@ -26,7 +26,7 @@ class AboutPrefsViewController: NSViewController, SettingsPane {
   }
 
   @IBAction func checkForUpdates(sender: NSButton) {
-    app.updaterController.checkForUpdates(sender)
+//    app.updaterController.checkForUpdates(sender)
   }
 
   @IBAction func openDonate(_: NSButton) {

@@ -12,14 +12,12 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>7122</string>
+	<string>7173</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
@@ -28,6 +26,10 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>MIT Licensed. 2017.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>需要位置信息根据日出日落时间调解亮度</string>
+	<key>NSLocationUsageDescription</key>
+	<string>需要位置信息根据日出日落时间调解亮度</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SUEnableJavaScript</key>

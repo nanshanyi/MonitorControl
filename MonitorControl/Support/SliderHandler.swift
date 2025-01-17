@@ -291,6 +291,7 @@ class SliderHandler {
     }
     if self.command == Command.brightness {
       _ = otherDisplay.setBrightness(value)
+      NotificationCenter.default.post(name: brightnessChangeNotify, object: value, userInfo: nil)
       return
     } else if !otherDisplay.isSw() {
       if self.command == Command.audioSpeakerVolume {
@@ -372,6 +373,7 @@ class SliderHandler {
       }
       // let average = sumVal / Float(num)
       slider.floatValue = value
+      NotificationCenter.default.post(name: brightnessChangeNotify, object: value, userInfo: nil)
       self.updateIcon()
       if abs(maxVal - minVal) > 0.001 {
         slider.setDisplayHighlightItems(true)
