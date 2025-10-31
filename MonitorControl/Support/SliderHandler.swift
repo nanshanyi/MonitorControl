@@ -291,6 +291,7 @@ class SliderHandler {
     }
     if self.command == Command.brightness {
       _ = otherDisplay.setBrightness(value)
+      NotificationCenter.default.post(name: Notification.Name(rawValue: "SliderValueChange"), object: value, userInfo: nil)
       return
     } else if !otherDisplay.isSw() {
       if self.command == Command.audioSpeakerVolume {

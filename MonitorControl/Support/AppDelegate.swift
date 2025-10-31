@@ -8,7 +8,6 @@ import os.log
 import ServiceManagement
 import Settings
 import SimplyCoreAudio
-import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
   let statusItem: NSStatusItem = {
@@ -16,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     item.behavior = .removalAllowed
     return item
   }()
+
   var mediaKeyTap = MediaKeyTapManager()
   var keyboardShortcuts = KeyboardShortcutsManager()
   let coreAudio = SimplyCoreAudio()
@@ -28,7 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   var jobRunning = false
   var startupActionWriteCounter: Int = 0
   var audioPlayer: AVAudioPlayer?
-  let updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: UpdaterDelegate(), userDriverDelegate: nil)
+  var changeTimer: Timer?
 
   var settingsPaneStyle: Settings.Style {
     if !DEBUG_MACOS10, #available(macOS 11.0, *) {
@@ -62,10 +62,46 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     self.setPrefsBuildNumber()
     self.setDefaultPrefs()
     self.setMenu()
+    self.statusItem.menu = menu
+    self.statusItem.button?.font = NSFont.systemFont(ofSize: 12)
+    self.statusItem.button?.imagePosition = .imageLeft
+    self.checkPermissions()
     CGDisplayRegisterReconfigurationCallback({ _, _, _ in app.displayReconfigured() }, nil)
     self.configure(firstrun: true)
     DisplayManager.shared.createGammaActivityEnforcer()
-    self.updaterController.startUpdater()
+
+    if let value = DisplayManager.shared.getOtherDisplays().first?.getBrightness() {
+      self.statusItem.button?.title = "\(Int(value * 100))"
+    }
+    NotificationCenter.default.addObserver(self, selector: #selector(self.sliderValueChange), name: NSNotification.Name(rawValue: "SliderValueChange"), object: nil)
+
+    self.autoBrightness()
+    self.changeTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+      self?.autoBrightness()
+    }
+  }
+
+  @objc
+  func sliderValueChange(noti: Notification) {
+    guard let value = noti.object as? Float else { return }
+    self.statusItem.button?.title = "\(Int(value * 100))"
+  }
+
+  func autoBrightness() {
+    if !prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) { return }
+    guard let otherDisplay = DisplayManager.shared.getOtherDisplays().first else { return }
+    guard let slider = otherDisplay.sliderHandler[.brightness] else { return }
+    guard let builtIn = DisplayManager.shared.getBuiltInDisplay() as? AppleDisplay else { return }
+    let endValue = builtIn.getAppleBrightness() * self.getBrightnessPercent(builtIn)
+    slider.setValue(endValue, displayID: otherDisplay.identifier)
+    _ = otherDisplay.setBrightness(endValue, slow: true)
+    self.statusItem.button?.title = "\(Int(endValue * 100))"
+  }
+
+  func getBrightnessPercent(_ buildIn: AppleDisplay) -> Float {
+    let bri = buildIn.getAppleBrightness()
+    let dayPercent = Float(prefs.string(forKey: PrefKey.syncPercent.rawValue) ?? "60") ?? 90
+    return bri * dayPercent / 100.0
   }
 
   @objc func quitClicked(_: AnyObject) {
@@ -152,7 +188,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
     }
     displaysPrefsVc?.loadDisplayList()
-    self.job(start: true)
+//    self.job(start: true)
+    self.autoBrightness()
   }
 
   func updateMenusAndKeys() {
@@ -175,7 +212,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(self.sleepNotification), name: NSWorkspace.willSleepNotification, object: nil)
     NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(self.wakeNotification), name: NSWorkspace.didWakeNotification, object: nil)
     _ = DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(rawValue: NSNotification.Name.accessibilityApi.rawValue), object: nil, queue: nil) { _ in DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { self.updateMediaKeyTap() } } // listen for accessibility status changes
-    self.statusItemObserver = statusItem.observe(\.isVisible, options: [.old, .new]) { _, _ in self.statusItemVisibilityChanged() }
+    self.statusItemObserver = self.statusItem.observe(\.isVisible, options: [.old, .new]) { _, _ in self.statusItemVisibilityChanged() }
   }
 
   @objc private func sleepNotification() {
@@ -206,6 +243,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         os_log("Displays don't need reconfig after sober but might need AVServices update", type: .info)
         DisplayManager.shared.updateArm64AVServices()
         self.job(start: true)
+        self.autoBrightness()
       }
       self.startupActionWriteRepeatAfterSober()
       self.updateMediaKeyTap()
@@ -229,6 +267,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func job(start: Bool = false) {
+    return
     guard !(self.jobRunning && start) else {
       return
     }
@@ -238,23 +277,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.jobRunning = true
       }
       var refreshedSomething = false
-      for display in DisplayManager.shared.displays {
-        let delta = display.refreshBrightness()
-        if delta != 0 {
-          refreshedSomething = true
-          if prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) {
-            for targetDisplay in DisplayManager.shared.displays where targetDisplay != display {
-              os_log("Updating delta from display %{public}@ to display %{public}@", type: .info, String(display.identifier), String(targetDisplay.identifier))
-              let newValue = max(0, min(1, targetDisplay.getBrightness() + delta))
-              _ = targetDisplay.setBrightness(newValue)
-              if let slider = targetDisplay.sliderHandler[.brightness] {
-                slider.setValue(newValue, displayID: targetDisplay.identifier)
-              }
-            }
-          }
-        }
-      }
-      let nextRefresh = refreshedSomething ? 0.1 : 1.0
+//      for display in DisplayManager.shared.displays {
+//        let delta = display.refreshBrightness()
+//        if delta != 0 {
+//          refreshedSomething = true
+//          if prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) {
+//            for targetDisplay in DisplayManager.shared.displays where targetDisplay != display {
+//              os_log("Updating delta from display %{public}@ to display %{public}@", type: .info, String(display.identifier), String(targetDisplay.identifier))
+//              let newValue = max(0, min(1, targetDisplay.getBrightness() + delta))
+//              let dayPercent = Float(prefs.string(forKey: PrefKey.syncPercent.rawValue) ?? "60") ?? 90
+//              _ = targetDisplay.setBrightness(newValue)
+//              if let slider = targetDisplay.sliderHandler[.brightness] {
+//                slider.setValue(newValue, displayID: targetDisplay.identifier)
+//              }
+      ////                        self.updateStatusNumber(newValue);
+//            }
+//          }
+//        }
+//      }
+      self.autoBrightness()
+      let nextRefresh = refreshedSomething ? 0.1 : 5
       DispatchQueue.main.asyncAfter(deadline: .now() + nextRefresh) {
         self.job()
       }
@@ -359,16 +401,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     onboardingVc?.window?.center()
     NSApp.activate(ignoringOtherApps: true)
   }
-  
+
   private func statusItemVisibilityChanged() {
     if !self.statusItem.isVisible, self.statusItemVisibilityChangedByUser {
       prefs.set(MenuIcon.hide.rawValue, forKey: PrefKey.menuIcon.rawValue)
     }
   }
-  
+
   func updateStatusItemVisibility(_ visible: Bool) {
-    statusItemVisibilityChangedByUser = false
-    statusItem.isVisible = visible
-    statusItemVisibilityChangedByUser = true
+    self.statusItemVisibilityChangedByUser = false
+    self.statusItem.isVisible = visible
+    self.statusItemVisibilityChangedByUser = true
   }
 }

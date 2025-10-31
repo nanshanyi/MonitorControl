@@ -156,7 +156,7 @@ class Display: Equatable {
       _ = self.setDirectBrightness(self.smoothBrightnessTransient, transient: true)
       if !dontPushAgain {
         self.smoothBrightnessRunning = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
           _ = self.setSmoothBrightness()
         }
       }

@@ -25,9 +25,7 @@ class AboutPrefsViewController: NSViewController, SettingsPane {
     self.setCopyrightInfo()
   }
 
-  @IBAction func checkForUpdates(sender: NSButton) {
-    app.updaterController.checkForUpdates(sender)
-  }
+  @IBAction func checkForUpdates(sender _: NSButton) {}
 
   @IBAction func openDonate(_: NSButton) {
     if let url = URL(string: "https://opencollective.com/monitorcontrol/donate") {

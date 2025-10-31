@@ -153,6 +153,9 @@ enum PrefKey: String {
 
   // Override DDC control command code
   case remapDDC
+
+  // 自定义变化百分比
+  case syncPercent
 }
 
 enum MultiKeyboardBrightness: Int {

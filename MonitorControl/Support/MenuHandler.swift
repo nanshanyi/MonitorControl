@@ -245,8 +245,6 @@ class MenuHandler: NSMenu, NSMenuDelegate {
       updateIcon.alphaValue = 0.3
       updateIcon.frame = NSRect(x: menuItemView.frame.maxX - iconSize * 2 - 14 - 17 + compensateForBlock, y: menuItemView.frame.origin.y + 5, width: iconSize, height: iconSize)
       updateIcon.imageScaling = .scaleProportionallyUpOrDown
-      updateIcon.action = #selector(app.updaterController.checkForUpdates(_:))
-      updateIcon.target = app.updaterController
 
       let quitIcon = NSButton()
       quitIcon.bezelStyle = .regularSquare
@@ -270,10 +268,7 @@ class MenuHandler: NSMenu, NSMenuDelegate {
       if app.macOS10() {
         self.insertItem(NSMenuItem.separator(), at: self.items.count)
       }
-      self.insertItem(withTitle: NSLocalizedString("Settings…", comment: "Shown in menu"), action: #selector(app.prefsClicked), keyEquivalent: ",", at: self.items.count)
-      let updateItem = NSMenuItem(title: NSLocalizedString("Check for updates…", comment: "Shown in menu"), action: #selector(app.updaterController.checkForUpdates(_:)), keyEquivalent: "")
-      updateItem.target = app.updaterController
-      self.insertItem(updateItem, at: self.items.count)
+      self.insertItem(withTitle: NSLocalizedString("Preferences…", comment: "Shown in menu"), action: #selector(app.prefsClicked), keyEquivalent: ",", at: self.items.count)
       self.insertItem(withTitle: NSLocalizedString("Quit", comment: "Shown in menu"), action: #selector(app.quitClicked), keyEquivalent: "q", at: self.items.count)
     }
   }

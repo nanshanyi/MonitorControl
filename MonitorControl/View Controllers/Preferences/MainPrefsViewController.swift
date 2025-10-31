@@ -27,6 +27,7 @@ class MainPrefsViewController: NSViewController, SettingsPane {
   @IBOutlet var rowDoNothingStartupText: NSGridRow!
   @IBOutlet var rowWriteStartupText: NSGridRow!
   @IBOutlet var rowReadStartupText: NSGridRow!
+  @IBOutlet var syncPercentText: NSTextField!
 
   func updateGridLayout() {
     if self.startupAction.selectedTag() == StartupAction.doNothing.rawValue {
@@ -50,6 +51,13 @@ class MainPrefsViewController: NSViewController, SettingsPane {
     self.populateSettings()
   }
 
+  override func viewDidDisappear() {
+    super.viewDidDisappear()
+    if let percent = Int(self.syncPercentText.stringValue) {
+      prefs.set(String(percent), forKey: PrefKey.syncPercent.rawValue)
+    }
+  }
+
   @available(macOS, deprecated: 10.10)
   func populateSettings() {
     // This is marked as deprectated but according to the function header it still does not have a replacement as of macOS 12 Monterey and is valid to use.
@@ -61,7 +69,8 @@ class MainPrefsViewController: NSViewController, SettingsPane {
     self.enableSmooth.state = prefs.bool(forKey: PrefKey.disableSmoothBrightness.rawValue) ? .off : .on
     self.enableBrightnessSync.state = prefs.bool(forKey: PrefKey.enableBrightnessSync.rawValue) ? .on : .off
     self.startupAction.selectItem(withTag: prefs.integer(forKey: PrefKey.startupAction.rawValue))
-    // Preload Display settings to some extent to properly set up size in orther that animation won't fail
+    self.syncPercentText.stringValue = prefs.string(forKey: PrefKey.syncPercent.rawValue) ?? "70"
+    // Preload Display preferences to some extent to properly set up size in orther that animation won't fail
     menuslidersPrefsVc?.view.layoutSubtreeIfNeeded()
     keyboardPrefsVc?.view.layoutSubtreeIfNeeded()
     displaysPrefsVc?.view.layoutSubtreeIfNeeded()
