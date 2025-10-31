@@ -1,7 +1,7 @@
 <img src=".github/Icon-cropped.png" width="200" alt="App icon" align="left"/>
 
 <div>
-<h3>MonitorControl - now compatible with macOS Sequoia</h3>
+<h3>MonitorControl</h3>
 <p>Controls your external display brightness and volume and shows native OSD.
 Use menubar extra sliders or the keyboard, including native Apple keys!</p>
 <a href="https://github.com/MonitorControl/MonitorControl/releases"><img src=".github/macos_badge_noborder.png" width="175" alt="Download for macOS"/></a>
@@ -24,11 +24,14 @@ Use menubar extra sliders or the keyboard, including native Apple keys!</p>
 
 <hr>
 
+> [!WARNING]
+> MonitorControl v4.2.0 [may crash](https://github.com/MonitorControl/MonitorControl/issues/1663) on certain configurations running macOS 15 Sequoia. Additionally, this version will not automatically update to the [latest app version](https://github.com/MonitorControl/MonitorControl/releases). To resolve the issue and ensure future updates, please upgrade manually.
+
 ## Download
 
 Go to [Releases](https://github.com/MonitorControl/MonitorControl/releases) and download the latest `.dmg`, or you can install via Homebrew:
 ```shell
-brew install MonitorControl
+brew install --cask monitorcontrol
 ```
 
 ## Major features
